@@ -298,6 +298,81 @@ public class SECMImage {
     
     /**
      * 
+     * @param reflect_x
+     * @param reflect_y
+     * @return
+     * @throws CannotMirrorException 
+     */
+    public SECMImage getMirrorExpanded(boolean reflect_x, boolean reflect_y) throws CannotMirrorException{
+        //find the domain
+        double xmax = getXMax();
+        double xmin = getXMin();
+        double ymax = getYMax();
+        double ymin = getYMin();
+        if((xmax*xmin < 0 && reflect_x) || (ymax*ymin < 0 && reflect_y)){
+            throw new CannotMirrorException("Mirroring may cause data overlap");
+        }
+        //initialize the new arrays
+        int xlen = Xvals.length;
+        int ylen = Yvals.length;
+        if(reflect_x){
+            xlen = Xvals.length*2;
+            if(xmax*xmin == 0.0){
+                xlen --;
+            }
+        }
+        if(reflect_y){
+            ylen = Yvals.length*2;
+            if(ymax*ymin == 0.0){
+                ylen --;
+            }
+        }
+        double[] new_xvals = new double[xlen];
+        double[] new_yvals = new double[ylen];
+        double[][] new_currents = new double[xlen][ylen];
+        //set-up scan and offset directions for copying the arrays. Default to 
+        //the 3rd quadrant -x,-y being where this SECM image is located.
+        int x_addr_offset = 0;
+        int y_addr_offset = 0;
+        int x_scan_dir = 1;
+        int y_scan_dir = 1;
+        if(xmin >= 0 && reflect_x){//quadrant one or four
+            x_addr_offset = Xvals.length - 1;
+            x_scan_dir = -1;
+        }
+        if(ymin >= 0 && reflect_y){//quadrant one or two
+            y_addr_offset = Yvals.length - 1;
+            y_scan_dir = -1;
+        }
+        //copy to the arrays
+        for(int x = 0; x < Xvals.length; x++){
+            new_xvals[x] = - Xvals[x_addr_offset + x_scan_dir*x];
+            new_xvals[xlen - 1 - x] = Xvals[x_addr_offset + x_scan_dir*x];
+            for(int y = 0; y < Yvals.length; y++){
+                new_currents[x][y] = Current[x_addr_offset + x_scan_dir*x][y_addr_offset + y_scan_dir*y];//Q3
+                if(reflect_x){
+                    new_currents[xlen - 1 - x][y] = Current[x_addr_offset + x_scan_dir*x][y_addr_offset + y_scan_dir*y];//Q4
+                }
+                if(reflect_y){
+                    new_currents[x][ylen - 1 - y] = Current[x_addr_offset + x_scan_dir*x][y_addr_offset + y_scan_dir*y];//Q2
+                }
+                if(reflect_x && reflect_y){
+                    new_currents[xlen - 1 - x][ylen - 1 - y] = Current[x_addr_offset + x_scan_dir*x][y_addr_offset + y_scan_dir*y];//Q1
+                }
+            }
+        }
+        for(int y = 0; y < Yvals.length; y++){
+            new_yvals[y] = - Yvals[y_addr_offset + y_scan_dir*y];
+            if(reflect_y){
+                new_yvals[ylen - 1 - y] = Yvals[y_addr_offset + y_scan_dir*y];
+            }
+        }
+        return new SECMImage(new_xvals, new_yvals, new_currents);
+    }
+    
+    
+    /**
+     * 
      * @return 
      */
     public SECMImage getNormalized(){

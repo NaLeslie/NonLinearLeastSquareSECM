@@ -4,6 +4,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
+import structures.LSIterationData;
 
 /**
  * <p>Static methods for handling <a href="https://en.wikipedia.org/wiki/Non-linear_least_squares">
@@ -78,28 +79,73 @@ public class NonlinearLeastSquares {
         return pseudoinverse.operate(residuals).toArray();
     }
     
-    /**
-     * 
-     * @param jacobian
-     * @param lambda
-     * @param residuals
-     * @return 
-     */
-    public static double[] DeltaCs_LevenbergMarquardt(Array2DRowRealMatrix jacobian, double lambda, ArrayRealVector residuals){
+    
+    public static double[] DeltaCs_LevenbergMarquardt(Array2DRowRealMatrix jacobian, double lambda, boolean use_diagonal, ArrayRealVector residuals){
         RealMatrix JT = jacobian.transpose();
         RealMatrix JTJ = JT.multiply(jacobian);
-        RealMatrix lDTD = lambda_DTD(JTJ, lambda);
-        RealMatrix inv_JTJ = MatrixUtils.inverse(JTJ.add(lDTD));
+        RealMatrix inv_JTJ;
+        if(use_diagonal){
+            RealMatrix lDTD = lambda_DTD(JTJ, lambda);
+            inv_JTJ = MatrixUtils.inverse(JTJ.add(lDTD));
+        }
+        else{
+            RealMatrix lI = lambda_I(JTJ, lambda);
+            inv_JTJ = MatrixUtils.inverse(JTJ.add(lI));
+        }
         RealMatrix pseudoinverse = inv_JTJ.multiply(JT);
         return pseudoinverse.operate(residuals).toArray();
     }
     
-    /**
-     * 
-     * @param JTJ
-     * @param lambda
-     * @return 
-     */
+    
+    public static LSIterationData NextIteration(LSIterationData last_iteration, Array2DRowRealMatrix jacobian, double lambda, boolean use_diagonal, ArrayRealVector residuals, int diagonal_policy){
+        RealMatrix JT = jacobian.transpose();
+        RealMatrix JTJ = JT.multiply(jacobian);
+        RealMatrix inv_JTJ;
+        
+        double[] diagonal = getDiagonal(JTJ);
+        LSIterationData current_iteration = new LSIterationData(last_iteration, diagonal, lambda, diagonal_policy);
+        
+        if(use_diagonal){
+            RealMatrix lDTD = lambda_DTD(current_iteration.jacobian_diagonal, lambda);
+            inv_JTJ = MatrixUtils.inverse(JTJ.add(lDTD));
+        }
+        else{
+            RealMatrix lI = lambda_I(JTJ, lambda);
+            inv_JTJ = MatrixUtils.inverse(JTJ.add(lI));
+        }
+        RealMatrix pseudoinverse = inv_JTJ.multiply(JT);
+        current_iteration.applyShiftVector(pseudoinverse.operate(residuals));
+        return current_iteration;
+    }
+    
+    
+    public static double[] getDiagonal(RealMatrix JTJ){
+        int size = JTJ.getColumnDimension();
+        double[] diag = new double[size];
+        for(int i = 0; i < size; i++){
+            diag[i] = JTJ.getEntry(i, i);
+        }
+        return diag;
+    }
+    
+    
+    public static RealMatrix lambda_DTD(double[] diag, double lambda){
+        RealMatrix DTD = new Array2DRowRealMatrix(diag.length, diag.length);
+        for(int i = 0; i < DTD.getColumnDimension(); i++){
+            for(int j = 0; j < DTD.getRowDimension(); j++){
+                if(i == j){
+                    double value = diag[i] * lambda;
+                    DTD.setEntry(j, i, value);
+                } 
+                else{
+                    DTD.setEntry(j, i, 0.0);
+                }
+            }
+        }
+        return DTD;
+    }
+    
+    
     public static RealMatrix lambda_DTD(RealMatrix JTJ, double lambda){
         RealMatrix DTD = JTJ.copy();
         for(int i = 0; i < DTD.getColumnDimension(); i++){
@@ -107,6 +153,22 @@ public class NonlinearLeastSquares {
                 if(i == j){
                     double value = DTD.getEntry(j, i)*lambda;
                     DTD.setEntry(j, i, value);
+                } 
+                else{
+                    DTD.setEntry(j, i, 0.0);
+                }
+            }
+        }
+        return DTD;
+    }
+    
+    
+    public static RealMatrix lambda_I(RealMatrix JTJ, double lambda){
+        RealMatrix DTD = JTJ.copy();
+        for(int i = 0; i < DTD.getColumnDimension(); i++){
+            for(int j = 0; j < DTD.getRowDimension(); j++){
+                if(i == j){
+                    DTD.setEntry(j, i, lambda);
                 } 
                 else{
                     DTD.setEntry(j, i, 0.0);

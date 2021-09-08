@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package structures;
 
 import static utility.Search.FindSmaller;
@@ -215,32 +210,41 @@ public class SECMImage {
     }
     
     /**
-     * 
-     * @return 
+     * Fetches the raw current data for this image
+     * @return the raw currents as an array [x-coordinate][y-coordinate]
      */
     public double[][] getDataCurrent(){
         return Current;
     }
     
     /**
-     * 
-     * @return 
+     * Fetches the x-positions that correspond to the x-addresses in the raw current data
+     * @return the x-positions represented by this SECM image
      */
     public double[] getDataXvals(){
         return Xvals;
     }
     
     /**
-     * 
-     * @return 
+     * Fetches the y-positions that correspond to the x-addresses in the raw current data
+     * @return the y-positions represented by this SECM image
      */
     public double[] getDataYvals(){
         return Yvals;
     }
     
     /**
-     * 
-     * @return
+     * Expands the SECM image by reflecting it along both axes. 
+     * This method reflects across x=0 and y=0. 
+     * If data in the SECM image straddles these boundaries, an error will be thrown.
+     * <p>Example:</p>
+     * <p>  Input</p>
+     * <p>    x data: -2 -1  0</p>
+     * <p>    y data:  1  3  5</p>
+     * <p>  Output</p>
+     * <p>    x data: -2 -1  0  1  2</p>
+     * <p>    y data: -5 -3 -1  1  3  5</p>
+     * @return the reflected SECM image
      * @throws CannotMirrorException 
      */
     public SECMImage getMirrorExpanded() throws CannotMirrorException{
@@ -266,6 +270,9 @@ public class SECMImage {
         double[][] new_currents = new double[xlen][ylen];
         //set-up scan and offset directions for copying the arrays. Default to 
         //the 3rd quadrant -x,-y being where this SECM image is located.
+        // 2 | 1
+        // --+--
+        // 3 | 4
         int x_addr_offset = 0;
         int y_addr_offset = 0;
         int x_scan_dir = 1;
@@ -297,10 +304,13 @@ public class SECMImage {
     }
     
     /**
-     * 
-     * @param reflect_x
-     * @param reflect_y
-     * @return
+     * Expands the SECM image by reflecting it along the specified axes. 
+     * This method reflects across x=0 and y=0, if applicable. 
+     * If data in the SECM image straddles these boundaries, an error will be thrown.
+     * if <code>reflect_x</code> and <code>reflect_y</code> are both false, 
+     * @param reflect_x Controls whether or not x-coordinate reflection occurs
+     * @param reflect_y Controls whether or not y-coordinate reflection occurs
+     * @return the reflected SECM image
      * @throws CannotMirrorException 
      */
     public SECMImage getMirrorExpanded(boolean reflect_x, boolean reflect_y) throws CannotMirrorException{
@@ -372,8 +382,8 @@ public class SECMImage {
     
     
     /**
-     * 
-     * @return 
+     * Re-scales the currents in the image such that the lowest current will be zero, and the highest current will be 1
+     * @return the re-scaled SECM image
      */
     public SECMImage getNormalized(){
         double min = Current[0][0];
@@ -399,10 +409,11 @@ public class SECMImage {
     }
     
     /**
-     * 
-     * @param x_offset
-     * @param y_offset
-     * @return 
+     * Produces a version of this SECM image that has had its position data changed by the given offsets.
+     * The offsets are added to every x and y position represented by this SECM image
+     * @param x_offset the quantity to be added to x-positions
+     * @param y_offset the quantity to be added to y-positions
+     * @return The result of all of the x and y-coordinates of this SECM image being increased by <code>x_offset</code> and <code>y_offset</code> respectively.
      */
     public SECMImage getOffset(double x_offset, double y_offset){
         double[][] new_currents = new double[Xvals.length][Yvals.length];
@@ -420,40 +431,48 @@ public class SECMImage {
     }
     
     /**
-     * 
-     * @return 
+     * Fetches the smallest x-coordinate represented by the SECM image
+     * @return the smallest x-coordinate represented by the SECM image
      */
     public double getXMin(){
         return Xvals[0];
     }
     
     /**
-     * 
-     * @return 
+     * Fetches the largest x-coordinate represented by the SECM image
+     * @return the largest x-coordinate represented by the SECM image
      */
     public double getXMax(){
         return Xvals[Xvals.length - 1];
     }
     
     /**
-     * 
-     * @return 
+     * Fetches the smallest y-coordinate represented by the SECM image
+     * @return the smallest y-coordinate represented by the SECM image
      */
     public double getYMin(){
         return Yvals[0];
     }
     
     /**
-     * 
-     * @return 
+     * Fetches the largest y-coordinate represented by the SECM image
+     * @return the largest y-coordinate represented by the SECM image
      */
     public double getYMax(){
         return Yvals[Yvals.length - 1];
     }
     
     /**
-     * 
-     * @return 
+     * Linearizes the 2D-current map using (starting with the x-direction
+     * <p>Example:</p>
+     * <p>  1 3 4</p>
+     * <p>  5 7 6 -> x</p>
+     * <p>  9 2 8</p>
+     * <p>    |  </p>
+     * <p>    V y</p>
+     * <p>Becomes:</p>
+     * <p>  1 3 4 5 7 6 9 2 8</p>
+     * @return the currents of this SECM image as a 1-D array
      */
     public double[] linearize(){
         double[] lin = new double[Xvals.length*Yvals.length];
@@ -466,11 +485,11 @@ public class SECMImage {
     }
     
     /**
-     * 
+     * Subtracts SECM images
      * Uses 'this' as the minuend and 'subtrahend' as the subtrahend
-     * @param subtrahend 
-     * @param out_of_bounds_behaviour
-     * @return 
+     * @param subtrahend the subtrahend of the subtraction
+     * @param out_of_bounds_behaviour used to determine what will happen if currents outside of 'this' SECM image will be handled, if applicable.
+     * @return the result of this - subtrahend. Will have the same points in space as the subtrahend
      */
     public SECMImage subtract(SECMImage subtrahend, int out_of_bounds_behaviour){
         double[][] minuend_current = getCurrents(subtrahend.Xvals, subtrahend.Yvals, out_of_bounds_behaviour);

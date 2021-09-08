@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package structures;
 
 import org.apache.commons.math3.linear.RealVector;
@@ -43,7 +38,13 @@ public class LSIterationData {
         sum_square_residuals = Double.NaN;
     }
     
-    
+    /**
+     * 
+     * @param last_iteration
+     * @param jtj_diag
+     * @param lamb
+     * @param diagonal_policy 
+     */
     public LSIterationData(LSIterationData last_iteration, double[] jtj_diag, double lamb, int diagonal_policy){
         int numparams = last_iteration.params.length;
         params = new double[numparams];
@@ -68,29 +69,66 @@ public class LSIterationData {
         sum_square_residuals = 0.0;
     }
     
+    /**
+     * 
+     * @param shift_vector 
+     */
     public void applyShiftVector(RealVector shift_vector){
         for(int i = 0; i < params.length; i++){
             params[i] = params[i] + shift_vector.getEntry(i);
         }
     }
     
+    /**
+     * the overall number of iterations that have taken place (note: an iteration can have more than one sub-iteration due to lambdas)
+     */
     public int iteration_number;
     
+    /**
+     * The values for the parameters for this iteration
+     */
     public double[] params;
     
+    /**
+     * The diagonal components of J<sup>T</sup>J
+     */
     public double[] jacobian_diagonal;
     
+    /**
+     * the value of lambda that was used to produce the parameters for this iteration
+     */
     public double lambda;
     
+    /**
+     * the sum of squares for this iteration
+     */
     public double sum_square_residuals;
     
+    /**
+     * The names of the parameters being optimized
+     */
     public String[] parameter_names;
     
+    /**
+     * The directory and file name for the file of the previous iteration 
+     * (that is, the iteration responsible for producing this iteration's parameters)
+     */
     public String data_file_path;
     
+    /**
+     * This diagonal policy means that the largest value between the Jacobian and the previous diagonal will be taken
+     * <p>D<sup>T</sup>D = max(J<sup>T</sup>J, D<sup>T</sup>D(previous iteration))</p>
+     */
     public static final int DIAGONAL_POLICY_BIGGEST = 0;
     
+    /**
+     * This diagonal policy means that D<sup>T</sup>D will be the non-zero diagonal components of J<sup>T</sup>J. 
+     * If there is a zero in one of the elements, the corresponding DTD element will be taken from the previous iteration.
+     */
     public static final int DIAGONAL_POLICY_LAST_NONZERO = 1;
     
+    /**
+     * This diagonal policy means that D<sup>T</sup>D will be the diagonal components of J<sup>T</sup>J for this iteration.
+     */
     public static final int DIAGONAL_POLICY_IGNORE_HISTORY = 2;
 }

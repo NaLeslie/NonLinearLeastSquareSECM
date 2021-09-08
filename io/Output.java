@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package io;
 
 import java.io.File;
@@ -30,6 +25,14 @@ import structures.SECMImage;
  * @author Nathaniel
  */
 public class Output {
+    /**
+     * Saves an SECM image as a csv formatted file
+     * @param filepath the directory and filename for the files that is to be saved.
+     * @param x_vals the x-positions of the datapoints
+     * @param y_vals the y-positions of the datapoints
+     * @param currents the currents at each datapoint. must be of the size [x-vals.length][y-vals.length]
+     * @throws IOException 
+     */
     public static void writeSECMImage(String filepath, double[] x_vals, double[] y_vals, double[][] currents) throws IOException{
         File f = new File(filepath);
         f.createNewFile();
@@ -43,6 +46,12 @@ public class Output {
         }
     }
     
+    /**
+     * Saves an SECM image as a csv formatted file
+     * @param filepath the directory and filename for the files that is to be saved.
+     * @param data the SECM image to be written to file
+     * @throws IOException 
+     */
     public static void writeSECMImage(String filepath, SECMImage data) throws IOException{
         double[] x_vals = data.getDataXvals();
         double[] y_vals = data.getDataYvals();
@@ -59,6 +68,15 @@ public class Output {
         }
     }
     
+    /**
+     * Saves Levenberg-Marquardt iteration metadata to an xml formatted file
+     * @param filepath the directory and filename for the files that is to be saved.
+     * @param data an array where each element corresponds to a seperate iteration/lambda pair
+     * @throws TransformerConfigurationException
+     * @throws FileNotFoundException
+     * @throws TransformerException
+     * @throws ParserConfigurationException 
+     */
     public static void saveLSIterationData(String filepath, LSIterationData[] data) 
             throws  TransformerConfigurationException, FileNotFoundException, TransformerException, ParserConfigurationException{
         Document dom;

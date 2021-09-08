@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package fitting;
 
 import java.util.Stack;
@@ -17,10 +12,10 @@ import structures.SECMImage;
  */
 public class ImageAlign {
     /**
-     * 
-     * @param obs
-     * @param sim
-     * @return 
+     * Returns the position of the centre of SECM image obs by performing a Gauss-Newton fit of the position of obs relative to sim that minimizes residuals.  
+     * @param obs Experimental SECM image. Not centred at 0,0
+     * @param sim Simulated SECM image. Centred at 0,0
+     * @return the position of the centre of SECM image obs
      */
     public static Position centreImages(SECMImage obs, SECMImage sim){
         int Max_iter = 15;
@@ -91,9 +86,9 @@ public class ImageAlign {
     }
     
     /**
-     * 
-     * @param residuals
-     * @return 
+     * Computes the sum of squares of the array
+     * @param residuals the array holding the data to be squared and summed
+     * @return the sum of squares of residuals
      */
     private static double squareSum(double[] residuals){
         double sum = 0.0;
@@ -104,9 +99,11 @@ public class ImageAlign {
     }
     
     /**
-     * 
-     * @param obs
-     * @return 
+     * Finds the points along x-linescans of obs that intersect with a 20% base-to-peak threshold.
+     * This first takes obs and re-scales the currents such that they fall between 0 and 1.
+     * Then scans along the x-direction and reports locations where the threshold 0.2 is crossed.
+     * @param obs The SECM image that is to be analyzed.
+     * @return the location of points points along x-linescans of obs that intersect with a 20% base-to-peak threshold. 
      */
     private static Position[] findCrossovers(SECMImage obs){
         double threshold = 0.2;
@@ -163,6 +160,14 @@ public class ImageAlign {
         return solution;
     }
     
+    /**
+     * Finds the centre of obs by: 
+     * <p>Finding the points along x-linescans of obs that intersect with a 20% base-to-peak threshold to a circle.</p>
+     * <p>Middle x-coordinate is the average of these intercepts</p>
+     * <p>Gauss-Newton is used to fit a circle with a centre y-coordinate and radius, r</p>
+     * @param obs The SECM image that is to be analyzed.
+     * @return The position of the centre of obs
+     */
     public static Position findCentre(SECMImage obs){
         int Max_iter = 15;
         int iterations = 0;
@@ -225,6 +230,13 @@ public class ImageAlign {
         return new Position(x0, old_y0, 0.0);
     }
     
+    /**
+     * Calculates the positive x-coordinate of a circle that has centre (0,y0) and radius r at y=y
+     * @param y the y-coordinate of the x-coordinate of interest
+     * @param r the radius of the circle
+     * @param y0 the y-coordinate of the centre of the circle
+     * @return the positive x-coordinate of the circle at y.
+     */
     private static double circleXCoord(double y, double r, double y0){
         double y_y0_sq = (y - y0)*(y - y0);
         double r_sq = r*r;
@@ -236,6 +248,13 @@ public class ImageAlign {
         }
     }
     
+    /**
+     * Calculates the derivative of the x-coordinate of a circle with respect to the radius at height y
+     * @param y the y-coordinate at which the derivative is to be evaluated
+     * @param r the radius of the circle
+     * @param y0 the y-coordinate of the centre of the circle
+     * @return dx/dr of the circle at position y 
+     */
     private static double dxBydr(double y, double r, double y0){
         double y_y0_sq = (y - y0)*(y - y0);
         double r_sq = r*r;
@@ -247,6 +266,13 @@ public class ImageAlign {
         }
     }
     
+    /**
+     * Calculates the derivative of the x-coordinate of a circle with respect to the y-coordinate of the circle's centre at height y
+     * @param y the y-coordinate at which the derivative is to be evaluated
+     * @param r the radius of the circle
+     * @param y0 the y-coordinate of the centre of the circle
+     * @return dx/dy0 at position y
+     */
     private static double dxBydy0(double y, double r, double y0){
         double y_y0_sq = (y - y0)*(y - y0);
         double r_sq = r*r;
@@ -258,6 +284,15 @@ public class ImageAlign {
         }
     }
     
+    /**
+     * Calculates the residuals for a circle with respect to experimental data.
+     * <p>The experimental data is expected to be already modified such that all x-positions are positive and 0 was the average x-position before the absolute values of the x-positions were taken.</p>
+     * <p>the residuals are the difference in the x-coordinate between the circle and the observed position</p>
+     * @param data the position data where the edges of the circular-like shape were observed
+     * @param r the radius of the circle
+     * @param y0 the y-coordinate of the centre of the circle
+     * @return the residuals for each position.
+     */
     private static double[] getResiduals(Position[] data, double r, double y0){
         double[] residuals = new double[data.length];
         for(int i = 0; i < data.length; i++){

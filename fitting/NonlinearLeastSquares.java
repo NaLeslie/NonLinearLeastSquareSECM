@@ -69,7 +69,7 @@ public class NonlinearLeastSquares {
      * Computes the amount by which each parameter needs to change from this iteration to the next.
      * @param jacobian The Jacobian matrix. Computed by <code>Jacobian</code>.
      * @param residuals The residuals vector. Computed by <code>Residual</code>
-     * @return <b>ΔC</b> vector, where <var>c<sub>i+1</sub></var> = <var>c<sub>i</sub></var> + <var>Δc<sub>i</sub></var>
+     * @return <b>Δc</b> vector, where <var>c<sub>i+1</sub></var> = <var>c<sub>i</sub></var> + <var>Δc<sub>i</sub></var>
      */
     public static double[] DeltaCs(Array2DRowRealMatrix jacobian, ArrayRealVector residuals){
         RealMatrix JT = jacobian.transpose();
@@ -79,7 +79,14 @@ public class NonlinearLeastSquares {
         return pseudoinverse.operate(residuals).toArray();
     }
     
-    
+    /**
+     * Computes the amount by which each parameter needs to change from this iteration to the next.
+     * @param jacobian The Jacobian matrix. Computed by <code>Jacobian</code>.
+     * @param lambda The Levenberg-Marquardt lambda parameter
+     * @param use_diagonal Will use D<sup>T</sup>D if true, I if false when applying Levenberg-Marquardt
+     * @param residuals The residuals vector. Computed by <code>Residual</code>
+     * @return <b>Δc</b> vector, where <var>c<sub>i+1</sub></var> = <var>c<sub>i</sub></var> + <var>Δc<sub>i</sub></var>
+     */
     public static double[] DeltaCs_LevenbergMarquardt(Array2DRowRealMatrix jacobian, double lambda, boolean use_diagonal, ArrayRealVector residuals){
         RealMatrix JT = jacobian.transpose();
         RealMatrix JTJ = JT.multiply(jacobian);
@@ -96,7 +103,16 @@ public class NonlinearLeastSquares {
         return pseudoinverse.operate(residuals).toArray();
     }
     
-    
+    /**
+     * Computes parameters and metadata for the next Lavanberg-Marquardt iteration.
+     * @param last_iteration Metadata describing the old iteration
+     * @param jacobian The Jacobian matrix. Computed by <code>Jacobian</code>.
+     * @param lambda The Levenberg-Marquardt lambda parameter
+     * @param use_diagonal Will use D<sup>T</sup>D (possibly computed by <code>lambda_DTD</code> depending on <code>diagonal_policy</code>) if true, I (computed by <code>lambda_I</code>) if false when applying Levenberg-Marquardt
+     * @param residuals The residuals vector. Computed by <code>Residual</code>
+     * @param diagonal_policy the policy that determines how the diagonal of past iterations' J<sup>T</sup>J influences D<sup>T</sup>D for this calculation
+     * @return Metadata describing the new iteration
+     */
     public static LSIterationData NextIteration(LSIterationData last_iteration, Array2DRowRealMatrix jacobian, double lambda, boolean use_diagonal, ArrayRealVector residuals, int diagonal_policy){
         RealMatrix JT = jacobian.transpose();
         RealMatrix JTJ = JT.multiply(jacobian);
@@ -118,7 +134,11 @@ public class NonlinearLeastSquares {
         return current_iteration;
     }
     
-    
+    /**
+     * Fetches the diagonal elements of J<sup>T</sup>J
+     * @param JTJ J<sup>T</sup>J
+     * @return the diagonal elements of J<sup>T</sup>J
+     */
     public static double[] getDiagonal(RealMatrix JTJ){
         int size = JTJ.getColumnDimension();
         double[] diag = new double[size];
@@ -128,7 +148,12 @@ public class NonlinearLeastSquares {
         return diag;
     }
     
-    
+    /**
+     * Creates a matrix where the diagonal elements are the diagonal elements of <code>diag</code> times lambda, and 0 elsewhere
+     * @param diag the diagonal elements of J<sup>T</sup>J
+     * @param lambda the Levenberg-Marquardt lambda parameter
+     * @return a matrix where the diagonal elements are the diagonal elements of <code>diag</code> times lambda, and 0 elsewhere
+     */
     public static RealMatrix lambda_DTD(double[] diag, double lambda){
         RealMatrix DTD = new Array2DRowRealMatrix(diag.length, diag.length);
         for(int i = 0; i < DTD.getColumnDimension(); i++){
@@ -145,7 +170,12 @@ public class NonlinearLeastSquares {
         return DTD;
     }
     
-    
+    /**
+     * Creates a matrix where the diagonal elements are the diagonal elements of <code>JTJ</code> times lambda, and 0 elsewhere
+     * @param JTJ J<sup>T</sup>J
+     * @param lambda the Levenberg-Marquardt lambda parameter
+     * @return a matrix where the diagonal elements are the diagonal elements of <code>JTJ</code> times lambda, and 0 elsewhere
+     */
     public static RealMatrix lambda_DTD(RealMatrix JTJ, double lambda){
         RealMatrix DTD = JTJ.copy();
         for(int i = 0; i < DTD.getColumnDimension(); i++){
@@ -162,7 +192,12 @@ public class NonlinearLeastSquares {
         return DTD;
     }
     
-    
+    /**
+     * Multiplies an identity matrix with the same dimensions as JTJ with lambda
+     * @param JTJ matrix to which the result of the function will be added later. Exists only for the purpose of taking its size
+     * @param lambda the Levenberg-Marquardt lambda parameter
+     * @return lambda*I with the same size as JTJ
+     */
     public static RealMatrix lambda_I(RealMatrix JTJ, double lambda){
         RealMatrix DTD = JTJ.copy();
         for(int i = 0; i < DTD.getColumnDimension(); i++){

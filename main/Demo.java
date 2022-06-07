@@ -196,7 +196,13 @@ public class Demo {
         
     }
     
-    
+    /**
+     * Aligns an experimental SECM image such that the centre is at 0,0 then exports the currents at specified coordinates to use in the fitting.
+     * @throws FileNotFoundException
+     * @throws ImproperFileFormattingException
+     * @throws CannotMirrorException
+     * @throws IOException 
+     */
     public static void setup_experimental_image() throws FileNotFoundException, ImproperFileFormattingException, CannotMirrorException, IOException{
         String filename = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AmT6\\AmT6_data.txt";
         
@@ -208,14 +214,19 @@ public class Demo {
         SECMImage spot = expimg.getCrop(54, 74, 16, 38, true);
         
         SECMImage spot_norm = spot.getNormalized();
+        //gauss newton
         Position a = ImageAlign.centreImages(spot_norm, sim_ext.getNormalized());
+        //centering using chords
         Position b = ImageAlign.findCentre(spot_norm);
         System.out.println(a.toString());
         System.out.println(b.toString());
-        SECMImage centr_spot = spot.getOffset(-b.getX(), -b.getY());
+        //apply offset
+        SECMImage centr_spot = spot.getOffset(-a.getX(), -a.getY());
         writeSECMImage("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AmT6\\2\\AmT6.csv", centr_spot);
+        //coordinates to use in fitting
         double[] xs = new double[]{-6.0, -4.5, -3.0, -1.5, 0.0, 1.5, 3.0, 4.5, 6.0};
         double[] ys = new double[]{-9.38, -5.38, -1.38, 2.62};
+        //export currents at the fitting coordinates
         double[][] currs = centr_spot.getCurrents(xs, ys, SECMImage.OUT_OF_BOUNDS_NAN);
         SECMImage newspaces = new SECMImage(xs, ys, currs);
         writeSECMImage("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AmT6\\2\\true.csv", newspaces);
@@ -356,7 +367,10 @@ public class Demo {
             System.out.println("Are your units correct???");
     }
     
-    
+    /**
+     * Code for generating the error surface plot in "Fitting Kinetics From Scanning Electrochemical Microscopy Images of Finite Circular Features"
+     * @throws FileNotFoundException 
+     */
     public static void error_surface() throws FileNotFoundException{
         double[][][][] data = new double[4][4][17][21];
         double[][] truedata = new double[4][4];
@@ -405,26 +419,51 @@ public class Demo {
         
     }
     
+    /**
+     * Converts an x or y coordinate to an array address
+     * @param x_or_y the x or y coordinate whose corresponding array address is requested
+     * @return the array address that corresponds to the x or y coordinate
+     */
     private static int xy_to_addr(double x_or_y){
         double addrval = (x_or_y - 47.0);
         return (int)Math.round(addrval);
     }
     
+    /**
+     * Converts a feature radius to an array address
+     * @param r the radius whose corresponding array address is requested
+     * @return the array address that corresponds to the feature radius
+     */
     private static int r_to_addr(double r){
         double addrval = (r - 0.00001)/0.0000003125;
         return (int)Math.round(addrval);
     }
     
+    /**
+     * Converts the logarithm of k to an array address
+     * @param lk the logarithm of k whose corresponding array address is requested
+     * @return the array address that corresponds to the logarithm of the feature k
+     */
     private static int lk_to_addr(double lk){
         double addrval = (lk + 3.5)/0.05;
         return (int)Math.round(addrval);
     }
     
+    /**
+     * Converts the array address for the radius to the radius
+     * @param addr the radius array address
+     * @return the radius of the reactive feature
+     */
     private static double addr_to_r(int addr){
         double addrval = ((double)addr)*0.0000003125 + 0.00001;
         return addrval;
     }
     
+    /**
+     * Converts the array address for the log k to the log k
+     * @param addr the log k array address
+     * @return the logarithm of k that corresponds to the given array address
+     */
     private static double addr_to_lk(int addr){
         double addrval = ((double)addr)*0.05 - 3.5;
         return addrval;

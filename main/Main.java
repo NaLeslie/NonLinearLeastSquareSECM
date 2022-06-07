@@ -1,17 +1,6 @@
 package main;
 
-import fitting.ImageAlign;
-import static fitting.NonlinearLeastSquares.*;
-import static io.Input.*;
-import static io.Output.*;
-import java.io.File;
-import java.util.Scanner;
 import static main.Demo.*;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import structures.LSIterationData;
-import structures.Position;
-import structures.SECMImage;
-import static utility.Search.FindSmaller;
 
 /**
  *

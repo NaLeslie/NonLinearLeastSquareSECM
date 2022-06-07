@@ -5,7 +5,7 @@ Author: Nathaniel Leslie
 
 Please note that this work is not currently at a point where it is "convenient" for use.
 
-#Starting a fit:
+# Starting a fit:
 1 - edit lines 207, 210, 225 232 of main.Demo.java to be the filepath for the experimental SECM image, a simulated SECM image of a disk with a similar radius and tip-to substrate distance, the file to which the centered secm image is to be written and the file to which the sub-sampled and centered experimental secm image is to be written.
 
 2 - edit line 214 of main.Demo.java to reflect the minimum and maximum x and y coordinates from the experimental SECM image to be considered in the fitting/ alignment.
@@ -14,8 +14,7 @@ Please note that this work is not currently at a point where it is "convenient" 
 
 4 - call setup_experimental_image() in the main.Main.main() method and run the program.
 
-#First iteration:
-
+# First iteration:
 1 - set iter to 0 on line 163 of main.Demo.java.
 
 2 - set the initial guesses for r, logk, z in lines 165-167 of main.Demo.java.
@@ -32,8 +31,7 @@ Please note that this work is not currently at a point where it is "convenient" 
 
 8 - call one_LRK_lm_iteration_exp() in the main.Main.main() method and run the program.
 
-#Subsequent iterations:
-
+# Subsequent iterations:
 1 - increment iter on line 163 of main.Demo.java.
 
 2 - set the guesses for r, logk, z in lines 165-167 of main.Demo.java using the parameters in the previous iterations xml file.
@@ -48,7 +46,7 @@ Please note that this work is not currently at a point where it is "convenient" 
 
 7 - call one_LRK_lm_iteration_exp() in the main.Main.main() method and run the program.
 
-#Input file formatting
+# Input file formatting:
 - Experimental SECM files are expected as comma separated ascii files with the format x,y,current
 
 - Simulated SECM files are expected as comma separated ascii files with the format x,y,perturb_r,perturb_logk,perturb_z,current

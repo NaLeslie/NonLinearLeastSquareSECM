@@ -30,6 +30,8 @@ import structures.SECMImage;
 import static io.Input.*;
 import java.io.File;
 import java.util.Scanner;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
 
 /**
  *
@@ -191,6 +193,51 @@ public class Demo {
         
         newlsi.data_file_path = iterationFile;
         
+        System.out.println("Covariance matrix");
+        for(int i = 0; i < newlsi.covariance.length; i++){
+            System.out.println("");
+            for(int j = 0; j < newlsi.covariance.length; j++){
+                System.out.print("\t" + newlsi.covariance[i][j]);
+            }
+        }
+        
+        System.out.println("Parameter standard errors:");
+        double s2 = ssr / ((double)newlsi.degrees_of_freedom);
+        RealMatrix J = Jacobian(iter_data);
+        RealMatrix JT = J.transpose();
+        RealMatrix JTJ = JT.multiply(J);
+        boolean[] include = new boolean[JTJ.getColumnDimension()];
+        int legal = JTJ.getColumnDimension();
+        for(int i = 0; i < JTJ.getColumnDimension(); i++){
+            double entry = JTJ.getEntry(i, i);
+            include[i] = true;
+            if(entry < 1E-30){
+                System.out.println("Sub-threshold entry at index " + i + " has been removed: " + entry);
+                include[i] = false;
+                legal --;
+            }
+        }
+        int[] rowcolumns = new int[legal];
+        int ind = 0;
+        for(int i = 0; i < include.length; i++){
+            if(include[i]){
+                rowcolumns[ind] = i;
+                ind ++;
+            }
+        }
+        RealMatrix newJTJ = JTJ.getSubMatrix(rowcolumns, rowcolumns);
+        RealMatrix inv_JTJ = MatrixUtils.inverse(newJTJ);
+        ind = 0;
+        for(int i = 0; i < include.length; i++){
+            if(include[i]){
+                double sterr = Math.sqrt(s2*inv_JTJ.getEntry(ind, ind));
+                System.out.println(newlsi.parameter_names[i] + ": " + sterr);
+                ind ++;
+            }
+            else{
+                System.out.println(newlsi.parameter_names[i] + ": NAN");
+            }
+        }
         
         saveLSIterationData("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AmT6\\2\\Iter" + newlsi.iteration_number + ".xml", new LSIterationData[]{newlsi});
         

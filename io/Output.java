@@ -103,7 +103,11 @@ public class Output {
                 property.appendChild(dom.createTextNode(parameter + ""));
             }
             curr_iter.appendChild(property);
-            
+            property = dom.createElement("Previous_iteration_parameter_standard_error");
+            for(int j = 0; j < data[i].params.length; j++){
+                property.appendChild(dom.createTextNode("\n\t\t"));
+                property.appendChild(dom.createTextNode("Not yet determined."));
+            }
             property = dom.createElement("Jacobian_diagonal");
             for (double jacdiag : data[i].jacobian_diagonal) {
                 property.appendChild(dom.createTextNode("\n\t\t"));

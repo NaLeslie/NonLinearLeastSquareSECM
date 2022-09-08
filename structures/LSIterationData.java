@@ -33,6 +33,8 @@ public class LSIterationData {
         System.arraycopy(initial_guess, 0, params, 0, initial_guess.length);
         jacobian_diagonal = new double[initial_guess.length];
         iteration_number = 0;
+        covariance = new double[initial_guess.length][initial_guess.length];
+        degrees_of_freedom = 1;
         parameter_names = paramnames;
         lambda = 0;
         sum_square_residuals = Double.NaN;
@@ -42,10 +44,12 @@ public class LSIterationData {
      * 
      * @param last_iteration
      * @param jtj_diag
+     * @param covariance the covariance of the previous iteration
+     * @param degrees_of_freedom the number of degrees of freedom of the last iteration
      * @param lamb
      * @param diagonal_policy 
      */
-    public LSIterationData(LSIterationData last_iteration, double[] jtj_diag, double lamb, int diagonal_policy){
+    public LSIterationData(LSIterationData last_iteration, double[] jtj_diag, double[][] covariance, int degrees_of_freedom, double lamb, int diagonal_policy){
         int numparams = last_iteration.params.length;
         params = new double[numparams];
         jacobian_diagonal = new double[numparams];
@@ -66,6 +70,8 @@ public class LSIterationData {
         iteration_number = last_iteration.iteration_number + 1;
         parameter_names = last_iteration.parameter_names;
         lambda = lamb;
+        this.covariance = covariance;
+        this.degrees_of_freedom = degrees_of_freedom;
         sum_square_residuals = 0.0;
     }
     
@@ -83,6 +89,18 @@ public class LSIterationData {
      * the overall number of iterations that have taken place (note: an iteration can have more than one sub-iteration due to lambdas)
      */
     public int iteration_number;
+    
+    /**
+     * The degrees of freedom for the iteration (number_of_data_points - number_of_parameters
+     */
+    public int degrees_of_freedom;
+    
+    /**
+     * <p>The covariance matrix for this iteration. This covariance can be calculated from J<sup>T</sup>J by:</p>
+     * <p>cov<sub>ij</sub>=J<sup>T</sup>J<sub>ij</sub> - average(J<sub>i</sub>)average(J<sub>j</sub>)</p>
+     * 
+     */
+    public double[][] covariance;
     
     /**
      * The values for the parameters for this iteration

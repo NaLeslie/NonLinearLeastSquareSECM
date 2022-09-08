@@ -119,7 +119,10 @@ public class NonlinearLeastSquares {
         RealMatrix inv_JTJ;
         
         double[] diagonal = getDiagonal(JTJ);
-        LSIterationData current_iteration = new LSIterationData(last_iteration, diagonal, lambda, diagonal_policy);
+        // calculate covariance
+        double[][] cov = getCovariance(JTJ, jacobian);
+        int degrees_of_freedom = jacobian.getRowDimension() - jacobian.getColumnDimension();
+        LSIterationData current_iteration = new LSIterationData(last_iteration, diagonal, cov, degrees_of_freedom, lambda, diagonal_policy);
         
         if(use_diagonal){
             RealMatrix lDTD = lambda_DTD(current_iteration.jacobian_diagonal, lambda);
@@ -131,6 +134,7 @@ public class NonlinearLeastSquares {
         }
         RealMatrix pseudoinverse = inv_JTJ.multiply(JT);
         current_iteration.applyShiftVector(pseudoinverse.operate(residuals));
+        
         return current_iteration;
     }
     
@@ -146,6 +150,32 @@ public class NonlinearLeastSquares {
             diag[i] = JTJ.getEntry(i, i);
         }
         return diag;
+    }
+    
+    /**
+     * Computes the covariance matrix from J<sup>T</sup>J and the number of points that were sampled
+     * @param JTJ J<sup>T</sup>J
+     * @param J J
+     * @return the covariance matrix where cov[i][j] is the covariance of parameter[i] and parameter[j]
+     */
+    public static double[][] getCovariance(RealMatrix JTJ, RealMatrix J){
+        int size = JTJ.getColumnDimension();
+        double[][] cov = new double[size][size];
+        double[] means = new double[size];
+        int num_points = J.getRowDimension();
+        for(int i = 0; i < size; i++){
+            means[i] = 0;
+            for(int j = 0; j < num_points; j++){
+                means[i] += J.getEntry(j, i);
+            }
+            means[i] = means[i] / ((double)num_points);
+        }
+        for(int i = 0; i < size; i++){
+            for(int j = 0; j< size; j++){
+                cov[i][j] = JTJ.getEntry(i, j)/((double)num_points) - means[i]*means[j];
+            }
+        }
+        return cov;
     }
     
     /**

@@ -201,7 +201,7 @@ public class Demo {
             }
         }
         
-        System.out.println("Parameter standard errors:");
+        System.out.println("\n\nParameter standard errors:");
         double s2 = ssr / ((double)newlsi.degrees_of_freedom);
         RealMatrix J = Jacobian(iter_data);
         RealMatrix JT = J.transpose();

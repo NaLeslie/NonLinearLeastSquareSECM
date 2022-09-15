@@ -64,7 +64,7 @@ public class Demo {
     }
     
     /**
-     * Should perform one LM fitting iteration on toy models with known L.
+     * Should perform one LM fitting iteration on toy models with known R.
      * @throws FileNotFoundException
      * @throws ImproperFileFormattingException 
      * @throws javax.xml.transform.TransformerException 
@@ -72,10 +72,10 @@ public class Demo {
      * @throws javax.xml.parsers.ParserConfigurationException 
      */
     public static void one_lm_iteration() throws FileNotFoundException, ImproperFileFormattingException, TransformerException, TransformerConfigurationException, ParserConfigurationException{
-        String obserevFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Edges\\Mart\\Canny\\more bg\\True.csv";
+        String obserevFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\Toy_1-Circle\\Subsample2\\True_10.csv";
         int iter = 7;
-        String iterationFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Edges\\Mart\\Canny\\more bg\\I" + iter + "_0.csv";
-        double L = 0.92;
+        String iterationFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\Toy_1-Circle\\Subs2_dir6\\Iter" + iter + "_E-0.5.csv";
+        double R = 0.92;
         double logk = -3.813;
         double[] obsim = read_observed(obserevFile);
         double[][] iter_data = read_fitting_iteration_two_param(iterationFile);
@@ -83,7 +83,7 @@ public class Demo {
         
         double lambda = 0.0;
         
-        LSIterationData lsi = new LSIterationData(new double[]{L, logk}, new String[]{"L", "logk"});
+        LSIterationData lsi = new LSIterationData(new double[]{R, logk}, new String[]{"R", "logk"});
         
         lsi.data_file_path = iterationFile;
         lsi.lambda = lambda;
@@ -102,13 +102,58 @@ public class Demo {
         
         newlsi.data_file_path = iterationFile;
         
+        System.out.println("Covariance matrix");
+        for(int i = 0; i < newlsi.covariance.length; i++){
+            System.out.println("");
+            for(int j = 0; j < newlsi.covariance.length; j++){
+                System.out.print("\t" + newlsi.covariance[i][j]);
+            }
+        }
         
-        saveLSIterationData("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Edges\\Mart\\Canny\\more bg\\Iter" + newlsi.iteration_number + ".xml", new LSIterationData[]{newlsi});
+        System.out.println("\n\nParameter standard errors:");
+        double s2 = ssr / ((double)newlsi.degrees_of_freedom);
+        RealMatrix J = Jacobian(iter_data);
+        RealMatrix JT = J.transpose();
+        RealMatrix JTJ = JT.multiply(J);
+        boolean[] include = new boolean[JTJ.getColumnDimension()];
+        int legal = JTJ.getColumnDimension();
+        for(int i = 0; i < JTJ.getColumnDimension(); i++){
+            double entry = JTJ.getEntry(i, i);
+            include[i] = true;
+            if(entry < 1E-30){
+                System.out.println("Sub-threshold entry at index " + i + " has been removed: " + entry);
+                include[i] = false;
+                legal --;
+            }
+        }
+        int[] rowcolumns = new int[legal];
+        int ind = 0;
+        for(int i = 0; i < include.length; i++){
+            if(include[i]){
+                rowcolumns[ind] = i;
+                ind ++;
+            }
+        }
+        RealMatrix newJTJ = JTJ.getSubMatrix(rowcolumns, rowcolumns);
+        RealMatrix inv_JTJ = MatrixUtils.inverse(newJTJ);
+        ind = 0;
+        for(int i = 0; i < include.length; i++){
+            if(include[i]){
+                double sterr = Math.sqrt(s2*inv_JTJ.getEntry(ind, ind));
+                System.out.println(newlsi.parameter_names[i] + ": " + sterr);
+                ind ++;
+            }
+            else{
+                System.out.println(newlsi.parameter_names[i] + ": NAN");
+            }
+        }
+        
+        //saveLSIterationData("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Edges\\Mart\\Canny\\more bg\\Iter" + newlsi.iteration_number + ".xml", new LSIterationData[]{newlsi});
         
     }
     
     /**
-     * fits L, R, and logk of a circular feature
+     * fits R, R, and logk of a circular feature
      * @throws FileNotFoundException
      * @throws ImproperFileFormattingException
      * @throws TransformerException
@@ -116,9 +161,9 @@ public class Demo {
      * @throws ParserConfigurationException 
      */
     public static void one_LRK_lm_iteration() throws FileNotFoundException, ImproperFileFormattingException, TransformerException, TransformerConfigurationException, ParserConfigurationException{
-        String obserevFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\Toy_6\\True.csv";
-        int iter = 11;
-        String iterationFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\Toy_6\\I" + iter + "_E-1.csv";
+        String obserevFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\Toy_3-LRK\\True.csv";
+        int iter = 6;
+        String iterationFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\Toy_3-LRK\\Iter" + iter + ".csv";
         double r = 1.23;
         double logk = -2.589;
         double L = 0.91;
@@ -147,13 +192,58 @@ public class Demo {
         
         newlsi.data_file_path = iterationFile;
         
+        System.out.println("Covariance matrix");
+        for(int i = 0; i < newlsi.covariance.length; i++){
+            System.out.println("");
+            for(int j = 0; j < newlsi.covariance.length; j++){
+                System.out.print("\t" + newlsi.covariance[i][j]);
+            }
+        }
         
-        saveLSIterationData("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\Toy_6\\Iter" + newlsi.iteration_number + ".xml", new LSIterationData[]{newlsi});
+        System.out.println("\n\nParameter standard errors:");
+        double s2 = ssr / ((double)newlsi.degrees_of_freedom);
+        RealMatrix J = Jacobian(iter_data);
+        RealMatrix JT = J.transpose();
+        RealMatrix JTJ = JT.multiply(J);
+        boolean[] include = new boolean[JTJ.getColumnDimension()];
+        int legal = JTJ.getColumnDimension();
+        for(int i = 0; i < JTJ.getColumnDimension(); i++){
+            double entry = JTJ.getEntry(i, i);
+            include[i] = true;
+            if(entry < 1E-30){
+                System.out.println("Sub-threshold entry at index " + i + " has been removed: " + entry);
+                include[i] = false;
+                legal --;
+            }
+        }
+        int[] rowcolumns = new int[legal];
+        int ind = 0;
+        for(int i = 0; i < include.length; i++){
+            if(include[i]){
+                rowcolumns[ind] = i;
+                ind ++;
+            }
+        }
+        RealMatrix newJTJ = JTJ.getSubMatrix(rowcolumns, rowcolumns);
+        RealMatrix inv_JTJ = MatrixUtils.inverse(newJTJ);
+        ind = 0;
+        for(int i = 0; i < include.length; i++){
+            if(include[i]){
+                double sterr = Math.sqrt(s2*inv_JTJ.getEntry(ind, ind));
+                System.out.println(newlsi.parameter_names[i] + ": " + sterr);
+                ind ++;
+            }
+            else{
+                System.out.println(newlsi.parameter_names[i] + ": NAN");
+            }
+        }
+        
+        //saveLSIterationData("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\Toy_6\\Iter" + newlsi.iteration_number + ".xml", new LSIterationData[]{newlsi});
         
     }
     
     /**
-     * fits L, R, and logk of a circular feature
+     * fits R, R, and logk of a circular feature
      * @throws FileNotFoundException
      * @throws ImproperFileFormattingException
      * @throws TransformerException
@@ -161,9 +251,9 @@ public class Demo {
      * @throws ParserConfigurationException 
      */
     public static void one_LRK_lm_iteration_exp() throws FileNotFoundException, ImproperFileFormattingException, TransformerException, TransformerConfigurationException, ParserConfigurationException{
-        String obserevFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AmT6\\2\\true.csv";
-        int iter = 9;
-        String iterationFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AmT6\\2\\I" + iter + "_E0.csv";
+        String obserevFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AlAr\\1\\looseL\\true.csv";
+        int iter = 7;
+        String iterationFile = "C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AlAr\\1\\looseL\\I" + iter + "_0.csv";
         double r = 1.75;
         double logk = -3.648;
         double L = 0.93;
@@ -239,7 +329,7 @@ public class Demo {
             }
         }
         
-        saveLSIterationData("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AmT6\\2\\Iter" + newlsi.iteration_number + ".xml", new LSIterationData[]{newlsi});
+        //saveLSIterationData("C:\\Users\\Nathaniel\\Documents\\COMSOL_DATA\\00_Primitives\\E_AmT6\\2\\Iter" + newlsi.iteration_number + ".xml", new LSIterationData[]{newlsi});
         
     }
     
